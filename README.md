@@ -2,7 +2,7 @@
 
 A Chrome extension that automatically fills web forms with random data. Perfect for testing, development, and demo purposes.
 
-![Extension Preview](./docs/extension.png)
+<img src="./docs/extension.png" alt="Extension Preview" width="400">
 
 ## Features
 
@@ -49,7 +49,7 @@ A Chrome extension that automatically fills web forms with random data. Perfect 
    
 2. **Automatic Filling**: When enabled, forms will be automatically filled when they appear on the page
 
-![Form Filling Example](./docs/form.png)
+<img src="./docs/form.png" alt="Form Filling Example" width="500">
 
 ### Custom Patterns
 
@@ -129,7 +129,7 @@ random-form-filler/
 
 ### Creating a Release
 
-#### Method 1: GitHub Actions (Automated)
+#### GitHub Actions (Recommended)
 
 1. Go to the "Actions" tab in your GitHub repository
 2. Click "Release Extension" workflow
@@ -143,15 +143,13 @@ The workflow will:
 - Create a GitHub release
 - Attach the ZIP file for download
 
-#### Method 2: Manual Release
+#### Alternative: Git Tags
 
-1. Update version in `extension/manifest.json`
-2. Create a git tag:
-   ```bash
-   git tag v1.0.1
-   git push origin v1.0.1
-   ```
-3. The workflow will automatically create the release
+You can also trigger a release by pushing a git tag:
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
 
 ## Browser Compatibility
 
