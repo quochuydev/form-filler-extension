@@ -1,3 +1,16 @@
+// === CONSTANTS ===
+const RANDOM_PLACEHOLDERS = {
+  NAME: "RANDOM_NAME",
+  EMAIL: "RANDOM_EMAIL",
+  PHONE: "RANDOM_PHONE",
+  ADDRESS: "RANDOM_ADDRESS",
+  COMPANY: "RANDOM_COMPANY",
+  TEXT: "RANDOM_TEXT"
+};
+
+const FORM_FILL_DELAY = 500;
+
+// === INITIALIZATION ===
 chrome.runtime.sendMessage({ type: "PING" }, (response) => {
   if (response?.type === "PONG") {
     console.log("Service worker is alive!", response);
@@ -5,15 +18,21 @@ chrome.runtime.sendMessage({ type: "PING" }, (response) => {
 });
 
 let isEnabled = true;
+let fillPatterns = [];
 
-// Update state from popup
+// === STATE MANAGEMENT ===
 window.setAutoFillState = (state) => {
   isEnabled = state;
 };
 
+window.updateFillPatterns = (newPatterns) => {
+  fillPatterns = newPatterns;
+};
+
 // Load initial state from storage
-chrome.storage.local.get(["autoFillEnabled"], (res) => {
+chrome.storage.local.get(["autoFillEnabled", "fillPatterns"], (res) => {
   isEnabled = res.autoFillEnabled ?? true;
+  fillPatterns = res.fillPatterns || [];
 });
 
 // === OBSERVER ===
@@ -25,7 +44,7 @@ const observer = new MutationObserver((mutations) => {
       if (node.nodeType === 1) {
         const form = node.querySelector("form");
         if (form) {
-          setTimeout(() => fillForm(form), 500); // Allow rendering to complete
+          setTimeout(() => fillForm(form), FORM_FILL_DELAY);
         }
       }
     });
@@ -34,24 +53,25 @@ const observer = new MutationObserver((mutations) => {
 
 observer.observe(document.body, { childList: true, subtree: true });
 
-let fillPatterns = [];
-
-// Load patterns from storage
-chrome.storage.local.get(["fillPatterns"], (res) => {
-  fillPatterns = res.fillPatterns || [];
-});
-
-// Update patterns when changed from popup
-window.updateFillPatterns = (newPatterns) => {
-  fillPatterns = newPatterns;
-};
-
-// === FORM-FILLING UTIL ===
+// === FORM-FILLING UTILITIES ===
 function setReactInputValue(input, value) {
   const setter = Object.getOwnPropertyDescriptor(input.__proto__, "value")?.set;
   setter?.call(input, value);
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function resolveRandomValue(value) {
+  const randomGenerators = {
+    [RANDOM_PLACEHOLDERS.NAME]: getRandomName,
+    [RANDOM_PLACEHOLDERS.EMAIL]: getRandomEmail,
+    [RANDOM_PLACEHOLDERS.PHONE]: getRandomPhone,
+    [RANDOM_PLACEHOLDERS.ADDRESS]: getRandomAddress,
+    [RANDOM_PLACEHOLDERS.COMPANY]: getRandomCompany,
+    [RANDOM_PLACEHOLDERS.TEXT]: getRandomText
+  };
+  
+  return randomGenerators[value] ? randomGenerators[value]() : value;
 }
 
 function fillForm(form) {
@@ -69,71 +89,58 @@ function fillForm(form) {
 
 function fillElementByType(element, pattern) {
   const { type, value } = pattern;
-  let actualValue = value;
+  const actualValue = resolveRandomValue(value);
   
-  // Handle random placeholders
-  if (value === "RANDOM_NAME") {
-    actualValue = getRandomName();
-  } else if (value === "RANDOM_EMAIL") {
-    actualValue = getRandomEmail();
-  } else if (value === "RANDOM_PHONE") {
-    actualValue = getRandomPhone();
-  } else if (value === "RANDOM_ADDRESS") {
-    actualValue = getRandomAddress();
-  } else if (value === "RANDOM_COMPANY") {
-    actualValue = getRandomCompany();
-  } else if (value === "RANDOM_TEXT") {
-    actualValue = getRandomText();
+  const fillStrategies = {
+    text: () => fillTextInput(element, actualValue),
+    email: () => fillTextInput(element, actualValue),
+    number: () => fillNumberInput(element, actualValue),
+    checkbox: () => fillCheckbox(element, actualValue),
+    radio: () => fillRadio(element, actualValue),
+    select: () => fillSelect(element, actualValue)
+  };
+  
+  const strategy = fillStrategies[type] || (() => fillTextInput(element, actualValue));
+  strategy();
+}
+
+function fillTextInput(element, value) {
+  if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
+    setReactInputValue(element, value);
   }
-  
-  switch (type) {
-    case "text":
-    case "email":
-      if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
-        setReactInputValue(element, actualValue);
-      }
-      break;
-      
-    case "number":
-      if (element.tagName === "INPUT") {
-        const numValue = parseFloat(actualValue) || 0;
-        setReactInputValue(element, numValue.toString());
-      }
-      break;
-      
-    case "checkbox":
-      if (element.tagName === "INPUT" && element.type === "checkbox") {
-        const shouldCheck = actualValue.toLowerCase() === "true" || actualValue === "1";
-        element.checked = shouldCheck;
-        element.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-      break;
-      
-    case "radio":
-      if (element.tagName === "INPUT" && element.type === "radio") {
-        if (element.value === actualValue) {
-          element.checked = true;
-          element.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-      }
-      break;
-      
-    case "select":
-      if (element.tagName === "SELECT") {
-        const option = Array.from(element.options).find(opt => 
-          opt.value === actualValue || opt.textContent.trim() === actualValue
-        );
-        if (option) {
-          element.selectedIndex = option.index;
-          element.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-      }
-      break;
-      
-    default:
-      if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
-        setReactInputValue(element, actualValue);
-      }
+}
+
+function fillNumberInput(element, value) {
+  if (element.tagName === "INPUT") {
+    const numValue = parseFloat(value) || 0;
+    setReactInputValue(element, numValue.toString());
+  }
+}
+
+function fillCheckbox(element, value) {
+  if (element.tagName === "INPUT" && element.type === "checkbox") {
+    const shouldCheck = value.toLowerCase() === "true" || value === "1";
+    element.checked = shouldCheck;
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
+function fillRadio(element, value) {
+  if (element.tagName === "INPUT" && element.type === "radio" && element.value === value) {
+    element.checked = true;
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
+function fillSelect(element, value) {
+  if (element.tagName === "SELECT") {
+    const option = Array.from(element.options).find(opt => 
+      opt.value === value || opt.textContent.trim() === value
+    );
+    if (option) {
+      element.selectedIndex = option.index;
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   }
 }
 
