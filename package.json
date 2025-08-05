@@ -1,15 +1,15 @@
 {
-  "name": "random-form-filler",
+  "name": "form-filler-extension",
   "version": "1.0.1",
   "description": "Chrome extension that automatically fills web forms with random data",
   "scripts": {
-    "build": "cd extension && zip -r ../random-form-filler.zip .",
+    "build": "cd extension && zip -r ../form-filler-extension.zip .",
     "version": "npm version patch --no-git-tag-version && npm run update-manifest",
     "update-manifest": "node -e \"const pkg=require('./package.json'); const manifest=require('./extension/manifest.json'); manifest.version=pkg.version; require('fs').writeFileSync('./extension/manifest.json', JSON.stringify(manifest, null, 2));\""
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/random-form-filler.git"
+    "url": "git+https://github.com/quochuydev/form-filler-extension.git"
   },
   "keywords": [
     "chrome-extension",
@@ -21,7 +21,7 @@
   "author": "Your Name",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yourusername/random-form-filler/issues"
+    "url": "https://github.com/quochuydev/form-filler-extension/issues"
   },
-  "homepage": "https://github.com/yourusername/random-form-filler#readme"
+  "homepage": "https://github.com/quochuydev/form-filler-extension#readme"
 }

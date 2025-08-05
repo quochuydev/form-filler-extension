@@ -140,7 +140,7 @@ vite.config.ts.timestamp-*
 
 # Extension specific files
 *.zip
-random-form-filler-v*.zip
+form-filler-extension-v*.zip
 *.pem
 *.crx
 release_notes.txt

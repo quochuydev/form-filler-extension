@@ -41,12 +41,12 @@ jobs:
     - name: Create extension package
       run: |
         cd extension
-        zip -r "../random-form-filler-${{ steps.get_version.outputs.TAG_NAME }}.zip" .
+        zip -r "../form-filler-extension-${{ steps.get_version.outputs.TAG_NAME }}.zip" .
         
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
         name: "Random Form Filler ${{ steps.get_version.outputs.TAG_NAME }}"
-        files: random-form-filler-${{ steps.get_version.outputs.TAG_NAME }}.zip
+        files: form-filler-extension-${{ steps.get_version.outputs.TAG_NAME }}.zip
         generate_release_notes: true

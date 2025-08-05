@@ -7,7 +7,7 @@ A Chrome extension that automatically fills web forms with random data.
 ## Installation
 
 1. Go to the [Releases page](../../releases)
-2. Download the latest `random-form-filler-v*.zip` file
+2. Download the latest `form-filler-extension-v*.zip` file
 3. Extract the ZIP file
 4. Open Chrome and go to `chrome://extensions/`
 5. Enable "Developer mode" (toggle in top right)
