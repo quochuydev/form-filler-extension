@@ -6,6 +6,50 @@
 <body>
   <h3>Form Filler</h3>
   <button id="toggle">Toggle Auto-Fill</button>
+  
+  <div class="section">
+    <h4>Pattern Locators</h4>
+    <div id="patterns-list"></div>
+    <button id="add-pattern">Add Pattern</button>
+  </div>
+
+  <div id="pattern-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h4>Add Pattern</h4>
+      <div class="form-group">
+        <label>Selector:</label>
+        <input type="text" id="pattern-selector" placeholder="e.g., input[name='firstName']">
+      </div>
+      <div class="form-group">
+        <label>Field Type:</label>
+        <select id="pattern-type">
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="email">Email</option>
+          <option value="checkbox">Checkbox</option>
+          <option value="radio">Radio</option>
+          <option value="select">Select</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fill Value:</label>
+        <input type="text" id="pattern-value" placeholder="Value to fill or use RANDOM_* placeholders">
+        <div class="quick-fill-buttons">
+          <button type="button" class="quick-fill" data-value="RANDOM_NAME">Name</button>
+          <button type="button" class="quick-fill" data-value="RANDOM_EMAIL">Email</button>
+          <button type="button" class="quick-fill" data-value="RANDOM_PHONE">Phone</button>
+          <button type="button" class="quick-fill" data-value="RANDOM_ADDRESS">Address</button>
+          <button type="button" class="quick-fill" data-value="RANDOM_COMPANY">Company</button>
+          <button type="button" class="quick-fill" data-value="RANDOM_TEXT">Text</button>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="save-pattern">Save</button>
+        <button id="cancel-pattern">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

@@ -4,44 +4,16 @@ chrome.runtime.sendMessage({ type: "PING" }, (response) => {
   }
 });
 
-// Inject toggle button into the page
-const toggleBtn = document.createElement("button");
-toggleBtn.textContent = "🟢 Auto-Fill ON";
-Object.assign(toggleBtn.style, {
-  position: "fixed",
-  bottom: "20px",
-  right: "20px",
-  zIndex: 9999,
-  padding: "8px 12px",
-  backgroundColor: "#0a0",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  fontSize: "14px",
-  cursor: "pointer",
-});
-document.body.appendChild(toggleBtn);
-
 let isEnabled = true;
 
-// Update UI from state
+// Update state from popup
 window.setAutoFillState = (state) => {
   isEnabled = state;
-  toggleBtn.textContent = isEnabled ? "🟢 Auto-Fill ON" : "🔴 Auto-Fill OFF";
-  toggleBtn.style.backgroundColor = isEnabled ? "#0a0" : "#a00";
 };
 
 // Load initial state from storage
 chrome.storage.local.get(["autoFillEnabled"], (res) => {
   isEnabled = res.autoFillEnabled ?? true;
-  window.setAutoFillState(isEnabled);
-});
-
-// Toggle handler
-toggleBtn.addEventListener("click", () => {
-  isEnabled = !isEnabled;
-  window.setAutoFillState(isEnabled);
-  chrome.storage.local.set({ autoFillEnabled: isEnabled });
 });
 
 // === OBSERVER ===
@@ -62,27 +34,107 @@ const observer = new MutationObserver((mutations) => {
 
 observer.observe(document.body, { childList: true, subtree: true });
 
+let fillPatterns = [];
+
+// Load patterns from storage
+chrome.storage.local.get(["fillPatterns"], (res) => {
+  fillPatterns = res.fillPatterns || [];
+});
+
+// Update patterns when changed from popup
+window.updateFillPatterns = (newPatterns) => {
+  fillPatterns = newPatterns;
+};
+
 // === FORM-FILLING UTIL ===
 function setReactInputValue(input, value) {
   const setter = Object.getOwnPropertyDescriptor(input.__proto__, "value")?.set;
   setter?.call(input, value);
   input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function fillForm(form) {
-  const inputs = form.querySelectorAll("input");
-
-  inputs.forEach((input) => {
-    console.log("input.name", input.name);
-    if (input.name.includes("firstName"))
-      setReactInputValue(input, getRandomName());
-    if (input.name.includes("lastName"))
-      setReactInputValue(input, getRandomName());
-    if (input.name.includes("password"))
-      setReactInputValue(input, "Qwerty@123");
-    if (input.name.includes("confirmPassword"))
-      setReactInputValue(input, "Qwerty@123");
+  fillPatterns.forEach(pattern => {
+    try {
+      const elements = form.querySelectorAll(pattern.selector);
+      elements.forEach(element => {
+        fillElementByType(element, pattern);
+      });
+    } catch (error) {
+      console.error(`Error applying pattern "${pattern.selector}":`, error);
+    }
   });
+}
+
+function fillElementByType(element, pattern) {
+  const { type, value } = pattern;
+  let actualValue = value;
+  
+  // Handle random placeholders
+  if (value === "RANDOM_NAME") {
+    actualValue = getRandomName();
+  } else if (value === "RANDOM_EMAIL") {
+    actualValue = getRandomEmail();
+  } else if (value === "RANDOM_PHONE") {
+    actualValue = getRandomPhone();
+  } else if (value === "RANDOM_ADDRESS") {
+    actualValue = getRandomAddress();
+  } else if (value === "RANDOM_COMPANY") {
+    actualValue = getRandomCompany();
+  } else if (value === "RANDOM_TEXT") {
+    actualValue = getRandomText();
+  }
+  
+  switch (type) {
+    case "text":
+    case "email":
+      if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
+        setReactInputValue(element, actualValue);
+      }
+      break;
+      
+    case "number":
+      if (element.tagName === "INPUT") {
+        const numValue = parseFloat(actualValue) || 0;
+        setReactInputValue(element, numValue.toString());
+      }
+      break;
+      
+    case "checkbox":
+      if (element.tagName === "INPUT" && element.type === "checkbox") {
+        const shouldCheck = actualValue.toLowerCase() === "true" || actualValue === "1";
+        element.checked = shouldCheck;
+        element.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      break;
+      
+    case "radio":
+      if (element.tagName === "INPUT" && element.type === "radio") {
+        if (element.value === actualValue) {
+          element.checked = true;
+          element.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+      break;
+      
+    case "select":
+      if (element.tagName === "SELECT") {
+        const option = Array.from(element.options).find(opt => 
+          opt.value === actualValue || opt.textContent.trim() === actualValue
+        );
+        if (option) {
+          element.selectedIndex = option.index;
+          element.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+      break;
+      
+    default:
+      if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
+        setReactInputValue(element, actualValue);
+      }
+  }
 }
 
 // === RANDOM NAME GEN ===
@@ -190,4 +242,49 @@ function getRandomName() {
     "Elisa",
   ];
   return names[Math.floor(Math.random() * names.length)];
+}
+
+function getRandomEmail() {
+  const domains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "test.com"];
+  const name = getRandomName().toLowerCase();
+  const domain = domains[Math.floor(Math.random() * domains.length)];
+  const number = Math.floor(Math.random() * 999);
+  return `${name}${number}@${domain}`;
+}
+
+function getRandomPhone() {
+  const areaCodes = ["555", "123", "456", "789", "234"];
+  const areaCode = areaCodes[Math.floor(Math.random() * areaCodes.length)];
+  const number = Math.floor(Math.random() * 9000000) + 1000000;
+  return `${areaCode}-${number.toString().slice(0, 3)}-${number.toString().slice(3)}`;
+}
+
+function getRandomAddress() {
+  const streets = ["Main St", "Oak Ave", "First St", "Second St", "Park Rd", "Elm St", "Maple Ave"];
+  const streetNumber = Math.floor(Math.random() * 9999) + 1;
+  const street = streets[Math.floor(Math.random() * streets.length)];
+  return `${streetNumber} ${street}`;
+}
+
+function getRandomCompany() {
+  const companies = [
+    "TechCorp", "DataSystems", "InnovateLab", "FutureTech", "SmartSolutions",
+    "GlobalTech", "NextGen", "ProActive", "DynamicSoft", "AlphaTech",
+    "BetaCorp", "GammaSystems", "DeltaInnovation", "OmegaTech", "ZenithSoft"
+  ];
+  return companies[Math.floor(Math.random() * companies.length)];
+}
+
+function getRandomText() {
+  const texts = [
+    "Lorem ipsum dolor sit amet",
+    "This is a test message",
+    "Sample text for testing",
+    "Random content here",
+    "Default placeholder text",
+    "Testing form filling",
+    "Automated text input",
+    "Demo content example"
+  ];
+  return texts[Math.floor(Math.random() * texts.length)];
 }
