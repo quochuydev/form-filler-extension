@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Auto Random Form Filler",
+  "version": "1.0",
+  "description": "Fills forms with random data when dialog opens.",
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "permissions": ["storage", "scripting", "activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_icon": "icon.png",
+    "default_title": "Form Auto-Filler",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "service_worker.js"
+  }
+}

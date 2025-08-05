@@ -1,0 +1,21 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 12px;
+  width: 200px;
+}
+
+button#toggle {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: #0a0;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button#toggle.off {
+  background-color: #a00;
+}
