@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.0.1)'
+        description: 'Version to release (e.g., v1.0.1)'
+        default: 'v1.0.1'
         required: true
         type: string
 
@@ -30,8 +31,11 @@ jobs:
       id: get_version
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          echo "TAG_NAME=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          VERSION="${{ github.event.inputs.version }}"
+          # Remove 'v' prefix if present for VERSION
+          VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
         else
           echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT

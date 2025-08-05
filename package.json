@@ -1,6 +1,6 @@
 {
   "name": "random-form-filler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Chrome extension that automatically fills web forms with random data",
   "scripts": {
     "build": "cd extension && zip -r ../random-form-filler.zip .",

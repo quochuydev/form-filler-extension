@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Auto Random Form Filler",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "Fills forms with random data when dialog opens.",
   "icons": {
     "48": "icon.png",
