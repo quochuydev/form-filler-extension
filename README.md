@@ -1,4 +1,4 @@
-# Random Form Filler
+# Form Filler Extension
 
 A Chrome extension that automatically fills web forms with random data.
 

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Auto Random Form Filler",
+  "name": "Form Filler Extension",
   "version": "1.0.1",
   "description": "Fills forms with random data when dialog opens.",
   "icons": {

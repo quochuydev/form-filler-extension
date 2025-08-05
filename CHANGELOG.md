@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-08-05
 
 ### Added
-- Initial release of Random Form Filler extension
+- Initial release of Form Filler Extension extension
 - Automatic form filling with random data
 - Support for text, email, number, checkbox, radio, and select fields
 - Custom pattern configuration system

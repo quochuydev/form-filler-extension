@@ -47,6 +47,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
-        name: "Random Form Filler ${{ steps.get_version.outputs.TAG_NAME }}"
+        name: "Form Filler Extension ${{ steps.get_version.outputs.TAG_NAME }}"
         files: form-filler-extension-${{ steps.get_version.outputs.TAG_NAME }}.zip
         generate_release_notes: true
