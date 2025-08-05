@@ -22,81 +22,31 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
     - name: Get version
       id: get_version
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          VERSION="${{ github.event.inputs.version }}"
-          # Remove 'v' prefix if present for VERSION
-          VERSION="${VERSION#v}"
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "TAG_NAME=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          TAG_NAME="${{ github.event.inputs.version }}"
         else
-          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
         fi
+        VERSION="${TAG_NAME#v}"
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
         
     - name: Update manifest version
       run: |
         sed -i 's/"version": "[^"]*"/"version": "${{ steps.get_version.outputs.VERSION }}"/' extension/manifest.json
         
-    - name: Verify manifest version
-      run: |
-        echo "Updated manifest.json version:"
-        grep '"version":' extension/manifest.json
-        
     - name: Create extension package
       run: |
         cd extension
-        zip -r "../random-form-filler-v${{ steps.get_version.outputs.VERSION }}.zip" .
-        cd ..
-        
-    - name: Generate changelog
-      id: changelog
-      run: |
-        if [ -f CHANGELOG.md ]; then
-          # Extract changelog for this version
-          awk '/^## \[${{ steps.get_version.outputs.VERSION }}\]/{flag=1; next} /^## \[/{flag=0} flag' CHANGELOG.md > release_notes.txt
-        else
-          echo "Release v${{ steps.get_version.outputs.VERSION }}" > release_notes.txt
-          echo "" >> release_notes.txt
-          echo "### Changes" >> release_notes.txt
-          echo "- Updated to version ${{ steps.get_version.outputs.VERSION }}" >> release_notes.txt
-        fi
+        zip -r "../random-form-filler-${{ steps.get_version.outputs.TAG_NAME }}.zip" .
         
     - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
-        release_name: "Random Form Filler v${{ steps.get_version.outputs.VERSION }}"
-        body_path: release_notes.txt
-        draft: false
-        prerelease: false
-        
-    - name: Upload Extension Package
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./random-form-filler-v${{ steps.get_version.outputs.VERSION }}.zip
-        asset_name: random-form-filler-v${{ steps.get_version.outputs.VERSION }}.zip
-        asset_content_type: application/zip
-        
-    - name: Commit version bump
-      if: github.event_name == 'workflow_dispatch'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add extension/manifest.json
-        git commit -m "Bump version to v${{ steps.get_version.outputs.VERSION }}" || exit 0
-        git tag ${{ steps.get_version.outputs.TAG_NAME }}
-        git push origin main
-        git push origin ${{ steps.get_version.outputs.TAG_NAME }}
+        name: "Random Form Filler ${{ steps.get_version.outputs.TAG_NAME }}"
+        files: random-form-filler-${{ steps.get_version.outputs.TAG_NAME }}.zip
+        generate_release_notes: true
